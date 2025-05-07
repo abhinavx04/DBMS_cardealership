@@ -166,27 +166,53 @@ export default function CreateListingPage() {
     try {
       setIsLoading(true);
 
-      const { error } = await supabase
+      // First check if profile exists
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      // If no profile exists, create one
+      if (!existingProfile) {
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            created_at: new Date().toISOString()
+          });
+
+        if (createProfileError) {
+          throw createProfileError;
+        }
+      }
+
+      // Now create the car listing
+      const { error: listingError } = await supabase
         .from('car_listings')
         .insert({
           ...values,
           user_id: user.id,
         });
 
-      if (error) throw error;
+      if (listingError) {
+        console.error('Listing error:', listingError);
+        throw listingError;
+      }
 
       toast({
         title: 'Listing created successfully',
         description: 'Your car listing has been published',
       });
 
-      router.push('/dashboard/my-listings');
+      router.push('/marketplace');
       router.refresh();
     } catch (error) {
       console.error('Error creating listing:', error);
       toast({
         title: 'Error creating listing',
-        description: 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     } finally {

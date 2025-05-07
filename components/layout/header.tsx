@@ -83,6 +83,9 @@ export function Header() {
           >
             Contact
           </Link>
+          <Link href="/dashboard/create-listing">
+            <Button variant="secondary">Create Listing</Button>
+          </Link>
         </nav>
 
         {/* Desktop Auth/User Controls */}
